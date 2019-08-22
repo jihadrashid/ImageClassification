@@ -1,0 +1,59 @@
+//Filtering image from collection, Mean function is used for mosaicking in case of bigger ROI
+var image = ee.Image(ee.ImageCollection("LANDSAT/LC08/C01/T1_SR")
+.filterBounds(ROI)
+.filterDate('2017-01-01', '2019-08-21')
+.filterMetadata('CLOUD_COVER', 'less_than', 0.1)
+.mean()
+.clip(ROI));
+Map.centerObject(ROI);
+
+//Adding filtered image to the map view in False Color Composite
+Map.addLayer(image, , {bands: ['B5', 'B4', 'B3'],min:0, max: 3000}, 'FCC');
+
+//Merging training features into one FeatureCollection and printing details to the console
+var classes = water.merge(built_up).merge(forest).merge(agri).merge(barren_land);
+print(classes);
+
+//Extract training sample data from select bands of the image, print to console
+var bands = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7'];
+var training = image.select(bands).sampleRegions({
+  collection: classes,
+  properties: ['lulc'],
+  scale: 30
+});
+
+//Training classifier - e.g. cart, randomForest, svm
+var classifier = ee.Classifier.randomForest().train({
+  features: training,
+  classProperty: 'lulc',
+  inputProperties: bands
+});
+
+//Classifying image
+var classified = image.select(bands).classify(classifier);
+Map.addLayer(classified,
+{min: 0, max: 4, palette: ['blue', 'red', 'green','yellow', 'white']},
+'classification');
+
+//Merging validation features into one FeatureCollection and printing to the console
+var valClasses = vWat.merge(vBuilt).merge(vFor).merge(vAgr).merge(vBar);
+
+//Sampling classification results to new validation areas and printing to the console
+var validation = classified.sampleRegions({
+  collection: valClasses,
+  properties: ['lulc'],
+  scale: 30,
+});
+print(validation);
+
+//Compare the lulc of validation data and the classification result
+var tAccuracy = validation.errorMatrix('lulc', 'classification');
+
+//Print the error matrix to the console
+print('Validation error matrix: ', tAccuracy);
+
+//Print the accuracy to the console
+print('Validation overall accuracy: ', tAccuracy.accuracy());
+print('Validation consumers accuracy: ', tAccuracy.consumersAccuracy());
+print('Validation producers accuracy: ', tAccuracy.producersAccuracy());
+print('Validation kappa accuracy: ', tAccuracy.kappa());
