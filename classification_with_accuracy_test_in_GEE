@@ -57,3 +57,12 @@ print('Validation overall accuracy: ', tAccuracy.accuracy());
 print('Validation consumers accuracy: ', tAccuracy.consumersAccuracy());
 print('Validation producers accuracy: ', tAccuracy.producersAccuracy());
 print('Validation kappa accuracy: ', tAccuracy.kappa());
+
+//Exporting maps
+Export.image.toDrive({
+  image: image,
+  description: "File Name", 
+  scale: 30,
+  crs: "EPSG:4326", 
+  maxPixels: 1e10,
+  fileFormat: "GeoTIFF"});
