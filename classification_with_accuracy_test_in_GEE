@@ -61,7 +61,7 @@ print('Validation kappa accuracy: ', tAccuracy.kappa());
 //Exporting maps
 Export.image.toDrive({
   image: image,
-  description: "File Name", 
+  description: "File_Name", 
   scale: 30,
   crs: "EPSG:4326", 
   maxPixels: 1e10,
